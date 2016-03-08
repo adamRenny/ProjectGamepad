@@ -3,7 +3,7 @@ import {
     reduce,
     map,
     filter,
-    toArray
+    findIndex,
 } from 'lodash';
 
 const EVENTS = {
@@ -12,15 +12,34 @@ const EVENTS = {
 };
 
 export default class GamePadAdapter {
+    connectedIds = [];
+
     constructor() {
         if (t.Nil.is(window.navigator.getGamepads)) {
             throw new TypeError('Gamepad API is not supported');
         }
 
+        this.updateConnectedGamepads();
+
         window.addEventListener(EVENTS.DID_CONNECT, this.onGamepadConnect);
         window.addEventListener(EVENTS.DID_DISCONNECT, this.onGamepadDisconnect);
     }
 
+    updateConnectedGamepads() {
+        this.connectedIds = map(
+            filter(
+                window.navigator.getGamepads(),
+                (gamepad) => !t.Nil.is(gamepad) && gamepad.connected
+            ),
+            (gamepad) => {
+                return gamepad.id
+            }
+        );
+    }
+
+    /**
+     * Must pull from the current gamepad list in order to get
+     */
     get gamepads() {
         return filter(
             window.navigator.getGamepads(),
@@ -45,12 +64,10 @@ export default class GamePadAdapter {
     }
 
     onGamepadConnect = (event) => {
-        const gamepad = event.gamepad;
-        console.log(gamepad);
+        this.updateConnectedGamepads();
     };
 
     onGamepadDisconnect = (event) => {
-        const gamepad = event.gamepad;
-        console.log(gamepad);
+        this.updateConnectedGamepads();
     };
 }
